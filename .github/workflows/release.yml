@@ -43,3 +43,7 @@ jobs:
             "ninja-${version}-windows-amd64.zip" \
             "ninja-${version}-linux-amd64.zip"             "ninja-${version}-darwin-arm64.zip" \
             --title "$version" --repo "$GITHUB_REPOSITORY"
+      - name: Update manifest
+        env:
+          GH_TOKEN: ${{ secrets.MANIFEST_DISPATCH_TOKEN }}
+        run: gh api repos/ps2build/manifest/dispatches -f event_type=component-released
