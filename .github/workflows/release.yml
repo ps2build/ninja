@@ -20,17 +20,19 @@ jobs:
 
           curl -fsSL "${base}/ninja-win.zip" -o ninja-win.zip
           curl -fsSL "${base}/ninja-linux.zip" -o ninja-linux.zip
+          curl -fsSL "${base}/ninja-mac.zip" -o ninja-mac.zip
           curl -fsSL "https://raw.githubusercontent.com/ninja-build/ninja/${version}/COPYING" -o COPYING
           test -s COPYING
 
-          for os in win linux; do
+          for os in win linux mac; do
             mkdir -p "dist-${os}/tools" "dist-${os}/licenses/ninja"
             unzip -q "ninja-${os}.zip" -d "dist-${os}/tools/"
             cp COPYING "dist-${os}/licenses/ninja/COPYING"
           done
-          chmod +x dist-linux/tools/ninja
+          chmod +x dist-linux/tools/ninja dist-mac/tools/ninja
           (cd dist-win && zip -r "../ninja-${version}-windows-amd64.zip" tools licenses)
           (cd dist-linux && zip -r "../ninja-${version}-linux-amd64.zip" tools licenses)
+          (cd dist-mac && zip -r "../ninja-${version}-darwin-arm64.zip" tools licenses)
 
       - name: Publish release
         env:
@@ -39,5 +41,5 @@ jobs:
           version="${GITHUB_REF_NAME}"
           gh release create "$version" \
             "ninja-${version}-windows-amd64.zip" \
-            "ninja-${version}-linux-amd64.zip" \
+            "ninja-${version}-linux-amd64.zip"             "ninja-${version}-darwin-arm64.zip" \
             --title "$version" --repo "$GITHUB_REPOSITORY"
