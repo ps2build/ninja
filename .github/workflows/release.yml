@@ -1,0 +1,43 @@
+name: Release
+
+on:
+  push:
+    tags: ['**']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Package upstream binaries
+        run: |
+          version="${GITHUB_REF_NAME}"
+          base="https://github.com/ninja-build/ninja/releases/download/${version}"
+
+          curl -fsSL "${base}/ninja-win.zip" -o ninja-win.zip
+          curl -fsSL "${base}/ninja-linux.zip" -o ninja-linux.zip
+          curl -fsSL "https://raw.githubusercontent.com/ninja-build/ninja/${version}/COPYING" -o COPYING
+          test -s COPYING
+
+          for os in win linux; do
+            mkdir -p "dist-${os}/tools" "dist-${os}/licenses/ninja"
+            unzip -q "ninja-${os}.zip" -d "dist-${os}/tools/"
+            cp COPYING "dist-${os}/licenses/ninja/COPYING"
+          done
+          chmod +x dist-linux/tools/ninja
+          (cd dist-win && zip -r "../ninja-${version}-windows-amd64.zip" tools licenses)
+          (cd dist-linux && zip -r "../ninja-${version}-linux-amd64.zip" tools licenses)
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          version="${GITHUB_REF_NAME}"
+          gh release create "$version" \
+            "ninja-${version}-windows-amd64.zip" \
+            "ninja-${version}-linux-amd64.zip" \
+            --title "$version" --repo "$GITHUB_REPOSITORY"
